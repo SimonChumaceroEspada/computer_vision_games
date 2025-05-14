@@ -221,11 +221,12 @@ def draw_hand_landmarks(frame, landmarks_px, gesture):
     
     return output_frame
 
-def play_geometry_dash():
+def play_geometry_dash(camera_index=None):
     """Función principal para jugar Geometry Dash con detección de manos"""
     try:
         # Encontrar una cámara disponible
-        camera_index = try_available_cameras()
+        if camera_index is None:
+            camera_index = try_available_cameras()
         if camera_index == -1:
             print("Error: No se pudo acceder a ninguna cámara.")
             return
@@ -351,11 +352,12 @@ def play_geometry_dash():
         # Asegurar que se sueltan todas las teclas
         pyautogui.keyUp('space')
 
-def test_hand_detection():
+def test_hand_detection(camera_index=None):
     """Función para probar la detección de manos y gestos sin controlar el juego"""
     try:
         # Encontrar una cámara disponible
-        camera_index = try_available_cameras()
+        if camera_index is None:
+            camera_index = try_available_cameras()
         if camera_index == -1:
             print("Error: No se pudo acceder a ninguna cámara.")
             return
@@ -472,6 +474,7 @@ def main():
     parser = argparse.ArgumentParser(description='Geometry Dash Hand Controller')
     parser.add_argument('--test', action='store_true', help='Probar la detección de gestos de mano')
     parser.add_argument('--play', action='store_true', help='Iniciar el controlador del juego')
+    parser.add_argument('--camera', type=int, help='Índice de la cámara a utilizar')
     
     # Analizar argumentos
     args = parser.parse_args()
@@ -483,9 +486,9 @@ def main():
     
     # Ejecutar la función correspondiente
     if args.test:
-        test_hand_detection()
+        test_hand_detection(camera_index=args.camera)
     elif args.play:
-        play_geometry_dash()
+        play_geometry_dash(camera_index=args.camera)
 
 if __name__ == "__main__":
     main()
