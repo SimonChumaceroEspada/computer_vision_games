@@ -691,6 +691,7 @@ Comandos:
   --play              Iniciar el controlador del juego
   --sensitivity=N     Ajustar sensibilidad (0.5-5.0, por defecto 2.5)
   --smoothing=N       Ajustar suavizado (0.0-1.0, por defecto 0.5)
+  --camera=N          Índice de la cámara a utilizar (por defecto 3)
   --help              Mostrar este mensaje de ayuda
 
 Características:
@@ -718,7 +719,7 @@ Requisitos:
 - NumPy
 
 Ejemplo:
-  python arcade_1942_mouse_controller.py --play --sensitivity=2.0 --smoothing=0.7
+  python arcade_1942_mouse_controller.py --play --sensitivity=2.0 --smoothing=0.7 --camera=1
 """)
 
 def main():
@@ -730,6 +731,8 @@ def main():
                         help='Ajustar sensibilidad (0.5-5.0, por defecto 2.5)')
     parser.add_argument('--smoothing', type=float, default=0.5, 
                         help='Ajustar suavizado (0.0-1.0, por defecto 0.5)')
+    parser.add_argument('--camera', type=int, default=3,
+                        help='Índice de la cámara a utilizar (por defecto 3)')
     
     # Analizar argumentos
     args = parser.parse_args()
@@ -741,6 +744,10 @@ def main():
     
     # Inicializar controlador
     controller = HandController()
+    
+    # Establecer la cámara si se especifica
+    if hasattr(args, 'camera'):
+        controller.camera_index = args.camera
     
     # Ajustar sensibilidad y suavizado si se especifican
     controller.adjust_sensitivity(args.sensitivity)

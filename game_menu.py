@@ -218,9 +218,21 @@ class ComputerVisionGamesMenu:
                 # Launch the game in a separate process
                 messagebox.showinfo("Launching Game", message)
                 
-                # Run the game script with the selected camera as an argument
-                # Added --play flag to ensure the game controllers start properly
-                subprocess.Popen([sys.executable, script_path, "--play", "--camera", str(camera_id)])
+                # Handle different parameter structures for different games
+                command = [sys.executable, script_path]
+                
+                # Special handling for arcade_1942_mouse_controller.py which requires different parameter format
+                if "arcade_1942_mouse_controller.py" in script_name:
+                    command.extend(["--play", f"--camera={str(camera_id)}"])
+                # Special handling for subway_surfers_pose_detection.py which doesn't accept camera parameter
+                elif "subway_surfers_pose_detection.py" in script_name:
+                    command.extend(["--play"])
+                # Default handling for other games (geometry dash, etc.)
+                else:
+                    command.extend(["--play", "--camera", str(camera_id)])
+                
+                # Run the game script with the appropriate parameters
+                subprocess.Popen(command)
                 
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to launch game: {str(e)}")
