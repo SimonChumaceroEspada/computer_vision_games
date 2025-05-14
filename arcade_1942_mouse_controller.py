@@ -54,8 +54,8 @@ class HandController:
         self.camera_index = self._find_camera()
         self.camera = None
         # Reducir resolución para mejor rendimiento
-        self.frame_width = 640   # Reducido de 1280 a 640
-        self.frame_height = 480  # Reducido de 960 a 480
+        self.frame_width = 480   # Reducido de 1280 a 640
+        self.frame_height = 320  # Reducido de 960 a 480
         self.screen_width, self.screen_height = pyautogui.size()
         
         # Variables para el control de sensibilidad
@@ -198,12 +198,12 @@ class HandController:
         # Contar dedos extendidos
         extended_fingers = sum([thumb_extended, index_extended, middle_extended, ring_extended, pinky_extended])
         
-        # Gestos especiales
-        # Gesto de disparo: dedo índice extendido, los demás cerrados
-        is_shooting = index_extended and not middle_extended and not ring_extended and not pinky_extended
+        # ----- NUEVOS GESTOS -----
+        # Gesto de Barril/Loop (X): SOLO el dedo índice extendido
+        is_barrel_roll = index_extended and not thumb_extended and not middle_extended and not ring_extended and not pinky_extended
         
-        # Gesto de Loop/Barrel roll: todos los dedos extendidos
-        is_barrel_roll = extended_fingers >= 4
+        # Gesto de Disparo Automático (Z): todos los dedos extendidos
+        is_auto_shoot = extended_fingers >= 4
         
         # Gesto de Start: pulgar y meñique extendidos, los demás cerrados
         is_start = thumb_extended and pinky_extended and not index_extended and not middle_extended and not ring_extended
@@ -211,16 +211,20 @@ class HandController:
         # Gesto de Select: pulgar e índice extendidos, los demás cerrados
         is_select = thumb_extended and index_extended and not middle_extended and not ring_extended and not pinky_extended
         
+        # Gesto de Pausa: pulgar, índice y meñique extendidos (como un signo de teléfono 🤙)
+        is_pause = thumb_extended and index_extended and not middle_extended and not ring_extended and pinky_extended
+        
         # Devolver información de posición y gestos
         return {
             "center_x": center_x,
             "center_y": center_y,
             "pointer_x": pointer_x,
             "pointer_y": pointer_y,
-            "is_shooting": is_shooting,
             "is_barrel_roll": is_barrel_roll,
+            "is_auto_shoot": is_auto_shoot,
             "is_start": is_start,
             "is_select": is_select,
+            "is_pause": is_pause,
             "extended_fingers": extended_fingers
         }
     
@@ -322,15 +326,33 @@ class HandController:
         new_keys = set()
         current_time = time.time()
         
-        # Gesto de disparo (X)
-        if hand_info['is_shooting']:
-            if current_time - self.last_command_time > self.gesture_cooldowns['shoot']:
-                new_keys.add('x')
-                
-        # Gesto de barrel roll (Z)
+        # Variables para control de disparos
+        if not hasattr(self, 'auto_shoot'):
+            self.auto_shoot = True  # Inicialmente activado
+            
+        # Verificar gesto de pausa
+        if hand_info['is_pause']:
+            if current_time - self.last_command_time > 0.5:  # Evitar cambios rápidos
+                self.auto_shoot = not self.auto_shoot
+                print(f"Disparo automático {'ACTIVADO' if self.auto_shoot else 'DESACTIVADO'}")
+                self.last_command_time = current_time
+        
+        # Gesto para activar disparo automático (todos los dedos)
+        if hand_info['is_auto_shoot']:
+            if not self.auto_shoot and current_time - self.last_command_time > 0.5:
+                self.auto_shoot = True
+                print("Disparo automático ACTIVADO")
+                self.last_command_time = current_time
+        
+        # Disparo automático - usa tecla Z y respeta el estado de pausa
+        if self.auto_shoot and current_time - self.last_command_time > self.gesture_cooldowns['shoot']:
+            new_keys.add('z')  # Tecla de disparo (Z)
+            self.last_command_time = current_time
+        
+        # Barril/Loop (X): SOLO con dedo índice
         if hand_info['is_barrel_roll']:
-            if 'z' not in self.current_keys_pressed and (current_time - self.last_command_time > self.gesture_cooldowns['barrel_roll']):
-                new_keys.add('z')
+            if 'x' not in self.current_keys_pressed and (current_time - self.last_command_time > self.gesture_cooldowns['barrel_roll']):
+                new_keys.add('x')  # Barrel roll key (X)
                 self.last_command_time = current_time
                 
         # Gesto de Start (Enter)
@@ -410,6 +432,15 @@ class HandController:
         center_x, center_y = width // 2, height // 2
         cv2.circle(frame, (center_x, center_y), dead_zone_radius, (100, 100, 100), 1)
         
+        # Estado del disparo automático
+        if hasattr(self, 'auto_shoot'):
+            if self.auto_shoot:
+                cv2.putText(frame, "🔫 DISPARO AUTOMÁTICO (Z)", (10, height - 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            else:
+                cv2.putText(frame, "⏸️ DISPARO PAUSADO", (10, height - 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
+        
         # Si tenemos información de la mano
         if hand_info is not None:
             # Mostrar información de posición de la mano
@@ -437,36 +468,36 @@ class HandController:
                             (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
             
             # Mostrar acciones especiales
-            if hand_info['is_shooting']:
-                cv2.putText(frame, "🔫 DISPARANDO (X)", (10, 120), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-            
             if hand_info['is_barrel_roll']:
-                cv2.putText(frame, "🔄 BARRIL/LOOP (Z)", (10, 150), 
+                cv2.putText(frame, "🔄 BARRIL/LOOP (X)", (10, 120), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                 
             if hand_info['is_start']:
-                cv2.putText(frame, "▶️ START (Enter)", (10, 180), 
+                cv2.putText(frame, "▶️ START (Enter)", (10, 150), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                 
             if hand_info['is_select']:
-                cv2.putText(frame, "⚙️ SELECT (Ctrl)", (10, 210), 
+                cv2.putText(frame, "⚙️ SELECT (Ctrl)", (10, 180), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                
+            if hand_info['is_pause']:
+                cv2.putText(frame, "🤙 PAUSAR/REANUDAR", (10, 210), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                 
         else:
-            cv2.putText(frame, "⚠️ No se detecta mano", (10, height - 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(frame, "⚠️ No se detecta mano", (10, height - 80), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
             
         # Mostrar guía de gestos
         cv2.putText(frame, "📋 GESTOS:", (width - 300, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-        cv2.putText(frame, "- Índice: Disparar", (width - 300, 60), 
+        cv2.putText(frame, "- Todos dedos: Barril (X)", (width - 300, 60), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-        cv2.putText(frame, "- Todos dedos: Barril", (width - 300, 90), 
+        cv2.putText(frame, "- Pulgar+Meñique: Start", (width - 300, 90), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-        cv2.putText(frame, "- Pulgar+Meñique: Start", (width - 300, 120), 
+        cv2.putText(frame, "- Pulgar+Índice: Select", (width - 300, 120), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-        cv2.putText(frame, "- Pulgar+Índice: Select", (width - 300, 150), 
+        cv2.putText(frame, "- 🤙: Pausar/reanudar", (width - 300, 150), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
             
     def test_detection(self):
@@ -669,8 +700,8 @@ Instrucciones:
    - Mover mano: Control preciso del avión (como un mouse)
    - Dedo índice extendido: Disparar (X)
    - Todos los dedos extendidos: Barril/Loop (Z)
-   - Pulgar y meñique extendidos: Start (Enter)
-   - Pulgar e índice extendidos: Select (Ctrl)
+   - Pulgar y meñique extendidos para START (tecla Enter)
+   - Pulgar e índice extendidos para SELECT (tecla Ctrl)
 4. Presiona ESC para salir
 
 Requisitos:

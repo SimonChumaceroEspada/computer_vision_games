@@ -153,12 +153,12 @@ def get_hand_gesture(hand_landmarks, image_shape):
     elif center_y > height * 0.6:
         y_pos = "down"
     
-    # Special gestures
-    # Shooting gesture: index finger extended, others closed
-    is_shooting = index_extended and not middle_extended and not ring_extended and not pinky_extended
+    # ----- NUEVOS GESTOS -----
+    # Gesto de Barril/Loop (X): SOLO el dedo índice extendido
+    is_barrel_roll = index_extended and not thumb_extended and not middle_extended and not ring_extended and not pinky_extended
     
-    # Loop/Barrel roll gesture: all fingers extended
-    is_barrel_roll = extended_fingers >= 4
+    # Gesto de Disparo Automático (Z): todos los dedos extendidos
+    is_auto_shoot = extended_fingers >= 4
     
     # Start gesture: thumb and pinky extended, others closed
     is_start = thumb_extended and pinky_extended and not index_extended and not middle_extended and not ring_extended
@@ -166,16 +166,20 @@ def get_hand_gesture(hand_landmarks, image_shape):
     # Select gesture: thumb and index extended, others closed
     is_select = thumb_extended and index_extended and not middle_extended and not ring_extended and not pinky_extended
     
+    # Pause gesture: thumb, index, and pinky extended (como un signo de teléfono 🤙)
+    is_pause = thumb_extended and index_extended and not middle_extended and not ring_extended and pinky_extended
+    
     # Return position and gesture information
     return {
         "center_x": center_x,
         "center_y": center_y, 
         "x_pos": x_pos,
         "y_pos": y_pos,
-        "is_shooting": is_shooting,
         "is_barrel_roll": is_barrel_roll,
+        "is_auto_shoot": is_auto_shoot,
         "is_start": is_start,
         "is_select": is_select,
+        "is_pause": is_pause,
         "extended_fingers": extended_fingers
     }
 
@@ -288,8 +292,8 @@ def play_game():
             
         # Initialize the VideoCapture object
         camera_video = cv2.VideoCapture(camera_index)
-        camera_video.set(3, 1280)
-        camera_video.set(4, 960)
+        camera_video.set(3, 640)  # Reducir resolución para mejor rendimiento
+        camera_video.set(4, 480)
         
         # Create named window
         cv2.namedWindow('1942 Arcade Game Hand Controller', cv2.WINDOW_NORMAL)
@@ -300,16 +304,23 @@ def play_game():
         # Variables for key press management
         current_keys_pressed = set()
         last_command_time = time.time()
+        last_shot_time = time.time()  # Tiempo específico para el disparo
         command_cooldown = 0.1  # 100ms cooldown between same commands for stability
+        shot_cooldown = 0.1     # Frecuencia de disparo automático (100ms = 10 disparos/segundo)
+        barrel_cooldown = 1.0   # 1 segundo entre barriles
+        
+        # Estado del controlador
+        auto_shoot = True       # Disparo automático activado inicialmente
         
         # Display instructions
         print("\n============== INSTRUCCIONES DE JUEGO ==============")
-        print("CONTROLES:")
+        print("CONTROLES ACTUALIZADOS:")
         print("  - Mover la mano IZQUIERDA/DERECHA/ARRIBA/ABAJO para mover el avión")
-        print("  - Apuntar con DEDO ÍNDICE para DISPARAR (tecla X)")
-        print("  - Todos los dedos extendidos para LOOP/BARRIL (tecla Z)")
-        print("  - Pulgar y meñique extendidos para START (tecla Enter)")
-        print("  - Pulgar e índice extendidos para SELECT (tecla Ctrl)")
+        print("  - SOLO DEDO ÍNDICE: Hacer BARRIL (X)")
+        print("  - TODOS LOS DEDOS: Activar DISPARO automático (Z)")
+        print("  - Pulgar y meñique extendidos: START (Enter)")
+        print("  - Pulgar e índice extendidos: SELECT (Ctrl)")
+        print("  - Pulgar, índice y meñique extendidos (🤙): PAUSAR DISPAROS")
         print("  - Presionar ESC para salir")
         print("===================================================\n")
         
@@ -332,6 +343,9 @@ def play_game():
             
             # Set for new keys to press this frame
             new_keys_pressed = set()
+            
+            # Variables para gestionar pausas y gestos
+            pause_requested = False
             
             # Process hand gestures if hands are detected
             if results.multi_hand_landmarks:
@@ -363,22 +377,31 @@ def play_game():
                         cv2.putText(frame, "⬇️ ABAJO", (10, 110), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
                     
-                    # Handle action commands
+                    # Handle action commands 
                     current_time = time.time()
                     
-                    if hand_info['is_shooting']:
-                        new_keys_pressed.add('x')  # Shooting key
-                        cv2.putText(frame, "🔫 DISPARANDO (X)", (10, 150), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-                        
+                    # Barril (ahora con dedo índice) - usa tecla X
                     if hand_info['is_barrel_roll']:
-                        # Only add if enough time has passed since last barrel roll
-                        if 'z' not in current_keys_pressed or (current_time - last_command_time > 1.0):
-                            new_keys_pressed.add('z')  # Barrel roll key
+                        if current_time - last_command_time > barrel_cooldown:
+                            new_keys_pressed.add('x')  # Barrel roll key (X)
                             last_command_time = current_time
-                        cv2.putText(frame, "🔄 BARRIL/LOOP (Z)", (10, 190), 
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-                        
+                            cv2.putText(frame, "🔄 BARRIL/LOOP (X)", (10, 190), 
+                                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    
+                    # Activar/desactivar disparo automático con todos los dedos extendidos
+                    if hand_info['is_auto_shoot']:
+                        # Si se detecta el gesto, asegurar que el disparo automático esté activado
+                        if not auto_shoot and current_time - last_command_time > 0.5:
+                            auto_shoot = True
+                            print("Disparo automático ACTIVADO")
+                            last_command_time = current_time
+                    
+                    # Detectar gesto para pausar/reanudar el disparo automático
+                    if hand_info['is_pause']:
+                        if current_time - last_command_time > 0.5:  # Evitar cambios rápidos
+                            pause_requested = True
+                            last_command_time = current_time
+                    
                     if hand_info['is_start']:
                         if 'enter' not in current_keys_pressed or (current_time - last_command_time > 0.5):
                             new_keys_pressed.add('enter')
@@ -396,18 +419,37 @@ def play_game():
                 # Mostrar esquema de gestos reconocidos
                 cv2.putText(frame, "📋 GESTOS:", (width - 300, 30), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-                cv2.putText(frame, "- Índice: Disparar", (width - 300, 60), 
+                cv2.putText(frame, "- Índice: Barril (X)", (width - 300, 60), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-                cv2.putText(frame, "- Todos dedos: Barril", (width - 300, 90), 
+                cv2.putText(frame, "- Todos dedos: Disparar", (width - 300, 90), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
                 cv2.putText(frame, "- Pulgar+Meñique: Start", (width - 300, 120), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
                 cv2.putText(frame, "- Pulgar+Índice: Select", (width - 300, 150), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-                
+                cv2.putText(frame, "- 🤙: Pausar/reanudar", (width - 300, 180), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
             else:
                 cv2.putText(frame, "⚠️ No se detecta mano", (10, height - 50), 
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            
+            # Manejar solicitud de pausa/reactivación del disparo automático
+            if pause_requested:
+                auto_shoot = not auto_shoot
+                print(f"Disparo automático {'ACTIVADO' if auto_shoot else 'DESACTIVADO'}")
+            
+            # Disparo automático - ahora usa Z y respeta el estado de pausa
+            current_time = time.time()
+            if auto_shoot and current_time - last_shot_time > shot_cooldown:
+                new_keys_pressed.add('z')  # Tecla de disparo (Z)
+                last_shot_time = current_time
+                # Dibujar indicador de disparo automático
+                cv2.putText(frame, "🔫 DISPARO AUTOMÁTICO (Z)", (10, height - 80), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            elif not auto_shoot:
+                # Mostrar indicador de que el disparo está pausado
+                cv2.putText(frame, "⏸️ DISPARO PAUSADO", (10, height - 80), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 165, 255), 2)
             
             # Process keyboard commands - release keys that are no longer pressed
             keys_to_release = current_keys_pressed - new_keys_pressed
