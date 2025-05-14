@@ -67,6 +67,12 @@ class HandController:
         # Variables para el control de gestos
         self.current_keys_pressed = set()
         self.last_command_time = time.time()
+        # Separar los tiempos de cooldown para cada acción
+        self.last_barrel_roll_time = time.time()
+        self.last_shoot_time = time.time()
+        self.last_start_time = time.time()
+        self.last_select_time = time.time()
+        
         self.gesture_cooldowns = {
             'barrel_roll': 1.0,  # 1 segundo entre barrel rolls
             'shoot': 0.1,        # 0.1 segundos entre disparos
@@ -345,27 +351,27 @@ class HandController:
                 self.last_command_time = current_time
         
         # Disparo automático - usa tecla Z y respeta el estado de pausa
-        if self.auto_shoot and current_time - self.last_command_time > self.gesture_cooldowns['shoot']:
+        if self.auto_shoot and current_time - self.last_shoot_time > self.gesture_cooldowns['shoot']:
             new_keys.add('z')  # Tecla de disparo (Z)
-            self.last_command_time = current_time
+            self.last_shoot_time = current_time
         
         # Barril/Loop (X): SOLO con dedo índice
         if hand_info['is_barrel_roll']:
-            if 'x' not in self.current_keys_pressed and (current_time - self.last_command_time > self.gesture_cooldowns['barrel_roll']):
+            if current_time - self.last_barrel_roll_time > self.gesture_cooldowns['barrel_roll']:
                 new_keys.add('x')  # Barrel roll key (X)
-                self.last_command_time = current_time
+                self.last_barrel_roll_time = current_time
                 
         # Gesto de Start (Enter)
         if hand_info['is_start']:
-            if 'enter' not in self.current_keys_pressed and (current_time - self.last_command_time > self.gesture_cooldowns['start']):
+            if current_time - self.last_start_time > self.gesture_cooldowns['start']:
                 new_keys.add('enter')
-                self.last_command_time = current_time
+                self.last_start_time = current_time
                 
         # Gesto de Select (Ctrl)
         if hand_info['is_select']:
-            if 'ctrl' not in self.current_keys_pressed and (current_time - self.last_command_time > self.gesture_cooldowns['select']):
+            if current_time - self.last_select_time > self.gesture_cooldowns['select']:
                 new_keys.add('ctrl')
-                self.last_command_time = current_time
+                self.last_select_time = current_time
                 
         return new_keys
     
