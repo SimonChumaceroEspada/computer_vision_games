@@ -385,8 +385,8 @@ def test_hands_joined():
             print(f"Error: No se pudo abrir la cámara con índice {camera_index}")
             return
             
-        camera_video.set(3, 1280)
-        camera_video.set(4, 960)
+        camera_video.set(3, 640)  # Cambiado de 1280 a 640
+        camera_video.set(4, 480)  # Cambiado de 960 a 480
         
         # Create named window for resizing purposes
         cv2.namedWindow('Hands Joined Test', cv2.WINDOW_NORMAL)
@@ -446,8 +446,8 @@ def test_horizontal_movement():
             print(f"Error: No se pudo abrir la cámara con índice {camera_index}")
             return
             
-        camera_video.set(3, 1280)
-        camera_video.set(4, 960)
+        camera_video.set(3, 640)  # Cambiado de 1280 a 640
+        camera_video.set(4, 480)  # Cambiado de 960 a 480
         
         # Create named window for resizing purposes
         cv2.namedWindow('Horizontal Movement Test', cv2.WINDOW_NORMAL)
@@ -507,8 +507,8 @@ def test_vertical_movement():
             print(f"Error: No se pudo abrir la cámara con índice {camera_index}")
             return
             
-        camera_video.set(3, 1280)
-        camera_video.set(4, 960)
+        camera_video.set(3, 640)  # Cambiado de 1280 a 640
+        camera_video.set(4, 480)  # Cambiado de 960 a 480
         
         # Create named window for resizing purposes
         cv2.namedWindow('Vertical Movement Test', cv2.WINDOW_NORMAL)
@@ -573,8 +573,8 @@ def play_game():
             print(f"Error: No se pudo abrir la cámara con índice {camera_index}")
             return
             
-        camera_video.set(3, 1280)
-        camera_video.set(4, 960)
+        camera_video.set(3, 640)  # Cambiado de 1280 a 640
+        camera_video.set(4, 480)  # Cambiado de 960 a 480
         
         # Create named window for resizing purposes
         cv2.namedWindow('Subway Surfers with Pose Detection', cv2.WINDOW_NORMAL)
