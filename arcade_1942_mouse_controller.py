@@ -63,8 +63,7 @@ class HandController:
         self.position_history = deque(maxlen=HISTORY_LENGTH)
         self.movement_threshold = 5  # Umbral mínimo para considerar movimiento intencionado
         self.sensitivity = 2.5  # Multiplicador de sensibilidad
-        
-        # Variables para el control de gestos
+          # Variables para el control de gestos
         self.current_keys_pressed = set()
         self.last_command_time = time.time()
         # Separar los tiempos de cooldown para cada acción
@@ -74,7 +73,7 @@ class HandController:
         self.last_select_time = time.time()
         
         self.gesture_cooldowns = {
-            'barrel_roll': 1.0,  # 1 segundo entre barrel rolls
+            'barrel_roll': 0.5,  # 0.5 segundos entre barrel rolls (reducido para pruebas)
             'shoot': 0.1,        # 0.1 segundos entre disparos
             'start': 0.5,        # 0.5 segundos para start/select
             'select': 0.5
@@ -189,38 +188,57 @@ class HandController:
         # Usar la posición del nudillo del índice como punto de referencia más estable
         pointer_x = int(index_mcp.x * width)
         pointer_y = int(index_mcp.y * height)
-        
-        # Determinar si los dedos están extendidos
-        # Un dedo está extendido si su punta está por encima de la articulación media del dedo medio
+          # Determinar si los dedos están extendidos - Método mejorado
+        # Obtener más puntos de referencia para mejor detección
+        thumb_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_MCP]
+        index_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_MCP]
         middle_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_MCP]
-        middle_mcp_y = middle_mcp.y * height
+        ring_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_MCP]
+        pinky_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_MCP]
         
-        thumb_extended = thumb_tip.y * height < wrist.y * height
-        index_extended = index_tip.y * height < middle_mcp_y
-        middle_extended = middle_tip.y * height < middle_mcp_y
-        ring_extended = ring_tip.y * height < middle_mcp_y
-        pinky_extended = pinky_tip.y * height < middle_mcp_y
+        # Para el pulgar, comparar con el MCP del pulgar (orientación diferente)
+        thumb_extended = thumb_tip.x * width > thumb_mcp.x * width if thumb_tip.x > wrist.x else thumb_tip.x * width < thumb_mcp.x * width
         
-        # Contar dedos extendidos
+        # Para los otros dedos, comparar la punta con su respectivo MCP
+        index_extended = index_tip.y * height < index_mcp.y * height
+        middle_extended = middle_tip.y * height < middle_mcp.y * height
+        ring_extended = ring_tip.y * height < ring_mcp.y * height
+        pinky_extended = pinky_tip.y * height < pinky_mcp.y * height
+          # Contar dedos extendidos
         extended_fingers = sum([thumb_extended, index_extended, middle_extended, ring_extended, pinky_extended])
         
         # ----- NUEVOS GESTOS -----
-        # Gesto de Barril/Loop (X): SOLO el dedo índice extendido
-        is_barrel_roll = index_extended and not thumb_extended and not middle_extended and not ring_extended and not pinky_extended
+        # Gesto de Barril/Loop (X): SOLO el dedo índice extendido, todos los demás cerrados
+        is_barrel_roll = (index_extended and 
+                         not thumb_extended and 
+                         not middle_extended and 
+                         not ring_extended and 
+                         not pinky_extended)
         
         # Gesto de Disparo Automático (Z): todos los dedos extendidos
         is_auto_shoot = extended_fingers >= 4
         
         # Gesto de Start: pulgar y meñique extendidos, los demás cerrados
-        is_start = thumb_extended and pinky_extended and not index_extended and not middle_extended and not ring_extended
+        is_start = (thumb_extended and 
+                   pinky_extended and 
+                   not index_extended and 
+                   not middle_extended and 
+                   not ring_extended)
         
         # Gesto de Select: pulgar e índice extendidos, los demás cerrados
-        is_select = thumb_extended and index_extended and not middle_extended and not ring_extended and not pinky_extended
+        is_select = (thumb_extended and 
+                    index_extended and 
+                    not middle_extended and 
+                    not ring_extended and 
+                    not pinky_extended)
         
         # Gesto de Pausa: pulgar, índice y meñique extendidos (como un signo de teléfono 🤙)
-        is_pause = thumb_extended and index_extended and not middle_extended and not ring_extended and pinky_extended
-        
-        # Devolver información de posición y gestos
+        is_pause = (thumb_extended and 
+                   index_extended and 
+                   not middle_extended and 
+                   not ring_extended and 
+                   pinky_extended)
+          # Devolver información de posición y gestos
         return {
             "center_x": center_x,
             "center_y": center_y,
@@ -231,7 +249,13 @@ class HandController:
             "is_start": is_start,
             "is_select": is_select,
             "is_pause": is_pause,
-            "extended_fingers": extended_fingers
+            "extended_fingers": extended_fingers,
+            # Información de debug para cada dedo
+            "thumb_extended": thumb_extended,
+            "index_extended": index_extended,
+            "middle_extended": middle_extended,
+            "ring_extended": ring_extended,
+            "pinky_extended": pinky_extended
         }
     
     def calculate_relative_movement(self, hand_info):
@@ -354,24 +378,26 @@ class HandController:
         if self.auto_shoot and current_time - self.last_shoot_time > self.gesture_cooldowns['shoot']:
             new_keys.add('z')  # Tecla de disparo (Z)
             self.last_shoot_time = current_time
-        
-        # Barril/Loop (X): SOLO con dedo índice
+          # Barril/Loop (X): SOLO con dedo índice
         if hand_info['is_barrel_roll']:
             if current_time - self.last_barrel_roll_time > self.gesture_cooldowns['barrel_roll']:
                 new_keys.add('x')  # Barrel roll key (X)
                 self.last_barrel_roll_time = current_time
+                print("🔄 BARRIL ROLL DETECTADO - Tecla X presionada")
                 
         # Gesto de Start (Enter)
         if hand_info['is_start']:
             if current_time - self.last_start_time > self.gesture_cooldowns['start']:
                 new_keys.add('enter')
                 self.last_start_time = current_time
+                print("▶️ START DETECTADO - Tecla Enter presionada")
                 
         # Gesto de Select (Ctrl)
         if hand_info['is_select']:
             if current_time - self.last_select_time > self.gesture_cooldowns['select']:
                 new_keys.add('ctrl')
                 self.last_select_time = current_time
+                print("⚙️ SELECT DETECTADO - Tecla Ctrl presionada")
                 
         return new_keys
     
@@ -471,12 +497,12 @@ class HandController:
                 
             if active_keys:
                 cv2.putText(frame, "Dirección: " + " ".join(active_keys), 
-                            (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-            
-            # Mostrar acciones especiales
+                            (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)            # Mostrar acciones especiales
             if hand_info['is_barrel_roll']:
                 cv2.putText(frame, "🔄 BARRIL/LOOP (X)", (10, 120), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                # Indicador adicional más visible para barril roll
+                cv2.rectangle(frame, (5, 115), (250, 135), (0, 0, 255), 2)
                 
             if hand_info['is_start']:
                 cv2.putText(frame, "▶️ START (Enter)", (10, 150), 
@@ -489,15 +515,34 @@ class HandController:
             if hand_info['is_pause']:
                 cv2.putText(frame, "🤙 PAUSAR/REANUDAR", (10, 210), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            
+            # Mostrar información de debug de dedos
+            debug_y = 240
+            finger_names = ["Pulgar", "Índice", "Medio", "Anular", "Meñique"]
+            finger_states = [
+                hand_info['thumb_extended'],
+                hand_info['index_extended'], 
+                hand_info['middle_extended'],
+                hand_info['ring_extended'],
+                hand_info['pinky_extended']
+            ]
+            
+            cv2.putText(frame, f"DEBUG - Dedos extendidos:", (10, debug_y), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+            
+            for i, (name, state) in enumerate(zip(finger_names, finger_states)):
+                color = (0, 255, 0) if state else (0, 0, 255)
+                status = "✓" if state else "✗"
+                cv2.putText(frame, f"{name}: {status}", (10, debug_y + 25 + i*20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                 
         else:
             cv2.putText(frame, "⚠️ No se detecta mano", (10, height - 80), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-            
-        # Mostrar guía de gestos
+              # Mostrar guía de gestos
         cv2.putText(frame, "📋 GESTOS:", (width - 300, 30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-        cv2.putText(frame, "- Todos dedos: Barril (X)", (width - 300, 60), 
+        cv2.putText(frame, "- Solo Índice: Barril (X)", (width - 300, 60), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         cv2.putText(frame, "- Pulgar+Meñique: Start", (width - 300, 90), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
@@ -584,13 +629,12 @@ class HandController:
                 return
                 
             cv2.namedWindow('1942 Arcade Mouse-Like Controller', cv2.WINDOW_NORMAL)
-            
-            # Mostrar instrucciones
+              # Mostrar instrucciones
             print("\n============== INSTRUCCIONES DE JUEGO ==============")
             print("CONTROLES:")
             print("  - Mover la mano como un mouse para controlar el avión")
-            print("  - Dedo índice extendido para DISPARAR (tecla X)")
-            print("  - Todos los dedos extendidos para LOOP/BARRIL (tecla Z)")
+            print("  - Solo dedo índice extendido: BARRIL/LOOP (tecla X)")
+            print("  - Todos los dedos extendidos: DISPARO AUTOMÁTICO (tecla Z)")
             print("  - Pulgar y meñique extendidos para START (tecla Enter)")
             print("  - Pulgar e índice extendidos para SELECT (tecla Ctrl)")
             print("  - Presionar ESC para salir")
