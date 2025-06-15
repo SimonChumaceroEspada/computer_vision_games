@@ -23,6 +23,7 @@ import pyautogui
 import numpy as np
 import mediapipe as mp
 import argparse
+import webbrowser
 from collections import deque
 
 # Configuración para máxima velocidad de respuesta
@@ -224,6 +225,10 @@ def draw_hand_landmarks(frame, landmarks_px, gesture):
 def play_geometry_dash(camera_index=None):
     """Función principal para jugar Geometry Dash con detección de manos"""
     try:
+        # Abrir automáticamente la URL de Geometry Dash
+        print("Abriendo Geometry Dash en el navegador...")
+        webbrowser.open("https://geometrygame.org/")
+        
         # Encontrar una cámara disponible
         if camera_index is None:
             camera_index = try_available_cameras()

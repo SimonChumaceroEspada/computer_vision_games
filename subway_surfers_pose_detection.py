@@ -24,6 +24,7 @@ from math import hypot
 import mediapipe as mp
 import matplotlib.pyplot as plt
 import argparse
+import webbrowser
 
 # Initialize mediapipe pose class
 mp_pose = mp.solutions.pose
@@ -557,6 +558,10 @@ def test_vertical_movement():
 def play_game():
     """Main function to play Subway Surfers with pose detection"""
     try:
+        # Abrir automáticamente la URL de Subway Surfers
+        print("Abriendo Subway Surfers en el navegador...")
+        webbrowser.open("https://subwaysurfersgame.io/online")
+        
         # Try to find an available camera
         camera_index = try_available_cameras()
         if camera_index == -1:

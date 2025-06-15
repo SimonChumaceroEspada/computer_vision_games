@@ -24,6 +24,7 @@ import pyautogui
 import numpy as np
 import mediapipe as mp
 import argparse
+import webbrowser
 from collections import deque
 
 # Initialize mediapipe hands class
@@ -605,8 +606,7 @@ class HandController:
                 
                 # Mostrar la interfaz
                 self.display_interface(frame, hand_info, (delta_x, delta_y))
-                
-                # Mostrar el fotograma
+                  # Mostrar el fotograma
                 cv2.imshow('Mouse-Like Hand Detection Test', frame)
                 
                 # Esperar 1ms y verificar si se presiona ESC
@@ -615,7 +615,6 @@ class HandController:
                     break
             
             self.release_resources()
-            
         except Exception as e:
             print(f"Error durante la prueba de detección: {e}")
             import traceback
@@ -625,6 +624,10 @@ class HandController:
     def play_game(self):
         """Función principal para jugar al juego arcade 1942 con detección de manos"""
         try:
+            # Abrir automáticamente la URL de 1942
+            print("Abriendo Arcade 1942 en el navegador...")
+            webbrowser.open("https://www.free80sarcade.com/1942-2.php")
+            
             if not self.initialize_camera():
                 return
                 
