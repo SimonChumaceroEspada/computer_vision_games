@@ -32,14 +32,24 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from camera_detector import list_available_cameras, test_camera_view
 
 class ComputerVisionGamesMenu:
-    """Main menu interface for the Computer Vision Games project"""
-    
+    """Main menu interface for the Computer Vision Games project"""        
     def __init__(self, root):
         """Initialize the menu system"""
         self.root = root
         self.root.title("Juegos de Visión por Computadora")
-        self.root.geometry("1200x800")
-        self.root.minsize(900, 600)
+          # Optimal resolution for maximum compatibility
+        optimal_width = 1024
+        optimal_height = 768
+        
+        # Center window on screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - optimal_width) // 2
+        y = (screen_height - optimal_height) // 2
+        
+        self.root.geometry(f"{optimal_width}x{optimal_height}+{x}+{y}")
+        self.root.minsize(800, 600)  # Minimum size for usability
+        self.root.maxsize(1400, 1000)  # Maximum size to prevent over-stretching
         self.root.resizable(True, True)
         
         # Modern color scheme
@@ -84,12 +94,11 @@ class ComputerVisionGamesMenu:
         
         # Create footer
         self.create_footer()
-        
-        # Load available cameras
+          # Load available cameras
         self.load_cameras()
         
-        # Bind resize event for responsiveness
-        self.root.bind('<Configure>', self.on_window_resize)
+        # Initial responsive layout setup
+        self.root.after(100, self.create_responsive_layout)
         
     def setup_styles(self):
         """Configure custom ttk styles for a modern look"""
@@ -223,18 +232,19 @@ class ComputerVisionGamesMenu:
         subtitle.pack(side=tk.LEFT, padx=10)
         
         right_line = tk.Frame(subtitle_frame, bg=self.colors['highlight'], height=2, width=50)
-        right_line.pack(side=tk.RIGHT, pady=8)        
+        right_line.pack(side=tk.RIGHT, pady=8)
+        
     def create_main_content(self):
         """Create the main content area with camera settings and game options"""
         # Main container with responsive design
         main_container = tk.Frame(self.scrollable_frame, bg=self.colors['primary'])
         main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Camera settings panel
+        # Camera settings panel - full width
         self.create_camera_panel(main_container)
         
-        # Games grid
-        self.create_games_grid(main_container)        
+        # Games grid - responsive
+        self.create_games_grid(main_container)
     def create_camera_panel(self, parent):
         """Create the camera settings panel"""
         camera_frame = tk.LabelFrame(parent, text="🎥 Configuración de Cámara", 
@@ -282,12 +292,12 @@ class ComputerVisionGamesMenu:
                                   font=('Segoe UI', 12, 'bold'), padx=20, pady=15,
                                   relief='flat', bd=2)
         games_frame.pack(fill=tk.BOTH, expand=True)
+          # Create a responsive container that adapts to window size
+        self.games_container = tk.Frame(games_frame, bg=self.colors['secondary'])
+        self.games_container.pack(fill=tk.BOTH, expand=True, pady=10)
         
-        # Grid container
-        grid_container = tk.Frame(games_frame, bg=self.colors['secondary'])
-        grid_container.pack(fill=tk.BOTH, expand=True, pady=10)
-          # Game data
-        games_data = [
+        # Store game data
+        self.games_data = [
             {
                 'name': 'Arcade 1942',
                 'description': 'Controla el clásico juego de disparos con gestos intuitivos de las manos',
@@ -311,24 +321,49 @@ class ComputerVisionGamesMenu:
             }
         ]
         
-        # Create game cards in responsive grid
-        for i, game in enumerate(games_data):
-            row = i // 2
-            col = i % 2
-            self.create_game_card(grid_container, game, row, col)
+        # Create responsive layout
+        self.create_responsive_layout()
         
-        # Configure grid weights for responsiveness
-        for i in range(2):  # 2 columns
-            grid_container.columnconfigure(i, weight=1)
+        # Bind window resize event for responsive behavior        self.root.bind('<Configure>', self.on_responsive_resize)        
+    def create_responsive_layout(self):
+        """Create compact layout with 3 games in a row for 1024x768"""
+        # Clear any existing game cards
+        for widget in self.games_container.winfo_children():
+            widget.destroy()
+        
+        # 3 columns layout - one game per column for compact design
+        cols = 3
+        
+        # Create game cards in 3-column grid (all in one row)
+        for i, game in enumerate(self.games_data):
+            row = 0  # All games in first row
+            col = i  # Each game gets its own column
+            self.create_game_card(self.games_container, game, row, col)
+        
+        # Configure grid weights for optimal spacing
+        for i in range(cols):
+            self.games_container.columnconfigure(i, weight=1)
+            
+        # Configure row weight
+        self.games_container.rowconfigure(0, weight=1)        
+    def on_responsive_resize(self, event):
+        """Handle window resize - maintain optimal layout"""
+        # Only respond to root window resize events
+        if event.widget == self.root:
+            # Maintain the 3-column layout for consistency
+            self.root.after(100, self.create_responsive_layout)
     
     def create_game_card(self, parent, game_data, row, col):
-        """Create a modern game card with image and information"""
-        # Card frame with rounded appearance
+        """Create a compact game card optimized for 3-column layout"""
+        # Card frame with responsive behavior - more compact padding
         card_frame = tk.Frame(parent, bg=self.colors['accent'], relief='flat', bd=1)
-        card_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+        card_frame.grid(row=row, column=col, padx=5, pady=8, sticky="nsew")
         
-        # Inner content frame
-        content_frame = tk.Frame(card_frame, bg=self.colors['accent'], padx=15, pady=15)
+        # Make card expand to fill available space
+        card_frame.grid_columnconfigure(0, weight=1)
+        card_frame.grid_rowconfigure(0, weight=1)
+          # Inner content frame - more compact padding for 3-column layout
+        content_frame = tk.Frame(card_frame, bg=self.colors['accent'], padx=8, pady=10)
         content_frame.pack(fill=tk.BOTH, expand=True)
         
         # Header with icon and title
@@ -352,14 +387,13 @@ class ComputerVisionGamesMenu:
                              font=title_font, bg=self.colors['accent'], 
                              fg=self.colors['text_primary'], anchor=tk.W)
         title_label.pack(fill=tk.X)
-        
-        # Game description
-        desc_font = font.Font(family="Segoe UI", size=10)
+          # Game description - more compact for 3-column layout
+        desc_font = font.Font(family="Segoe UI", size=8)
         desc_label = tk.Label(text_frame, text=game_data['description'], 
                             font=desc_font, bg=self.colors['accent'], 
                             fg=self.colors['text_secondary'], 
-                            wraplength=250, justify=tk.LEFT, anchor=tk.W)
-        desc_label.pack(fill=tk.X, pady=(5, 0))
+                            wraplength=180, justify=tk.LEFT, anchor=tk.W)
+        desc_label.pack(fill=tk.X, pady=(3, 0))
         
         # Background image (if available)
         card_key = f"{game_data['image_key']}_card"
@@ -371,11 +405,10 @@ class ComputerVisionGamesMenu:
             
             img_label = tk.Label(img_frame, image=self.images[card_key], 
                                bg=self.colors['accent'])
-            img_label.pack(expand=True)
-          # Launch button with custom styling
+            img_label.pack(expand=True)        # Launch button with custom styling - more compact
         launch_btn = ttk.Button(content_frame, text=f"🚀 Lanzar {game_data['name']}", 
                                command=game_data['command'], style='Game.TButton')
-        launch_btn.pack(fill=tk.X, pady=(10, 0))        
+        launch_btn.pack(fill=tk.X, pady=(8, 0))
     def create_footer(self):
         """Create the footer with credits and exit button"""
         footer_frame = tk.Frame(self.scrollable_frame, bg=self.colors['secondary'], padx=30, pady=20)
@@ -386,7 +419,7 @@ class ComputerVisionGamesMenu:
         credits_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)        
         credits_font = font.Font(family="Segoe UI", size=10, weight="normal")
         credits = tk.Label(credits_frame, 
-                          text="💻 Juegos de Visión por Computadora - Junio 2025 | Hecho con ❤️", 
+                          text="💻 Juegos de Visión por Computadora - Simon Chumacero Espada - Junio 2025 ", 
                           font=credits_font, bg=self.colors['secondary'], 
                           fg=self.colors['text_secondary'])
         credits.pack(anchor=tk.W)
@@ -406,12 +439,6 @@ class ComputerVisionGamesMenu:
                              command=self.root.destroy, style='Small.TButton')
         exit_btn.pack()
         
-    def on_window_resize(self, event):
-        """Handle window resize for responsiveness"""
-        if event.widget == self.root:
-            # Update canvas scroll region
-            self.root.after_idle(lambda: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-    
     def load_cameras(self):
         """Load all available cameras and update the UI"""
         self.camera_listbox.delete(0, tk.END)
