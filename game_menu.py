@@ -37,7 +37,7 @@ class ComputerVisionGamesMenu:
     def __init__(self, root):
         """Initialize the menu system"""
         self.root = root
-        self.root.title("Computer Vision Games")
+        self.root.title("Juegos de Visión por Computadora")
         self.root.geometry("1200x800")
         self.root.minsize(900, 600)
         self.root.resizable(True, True)
@@ -93,29 +93,30 @@ class ComputerVisionGamesMenu:
         
     def setup_styles(self):
         """Configure custom ttk styles for a modern look"""
-        style = ttk.Style()
-        
-        # Configure button style
+        style = ttk.Style()        # Configure button style with black text for better visibility
         style.configure('Game.TButton',
                        background=self.colors['accent'],
-                       foreground=self.colors['text_primary'],
+                       foreground='#000000',  # Black text for better visibility
                        font=('Segoe UI', 10, 'bold'),
                        padding=(15, 10))
         
         style.map('Game.TButton',
                  background=[('active', self.colors['highlight']),
-                            ('pressed', self.colors['secondary'])])
-        
-        # Configure smaller button style
+                            ('pressed', self.colors['secondary'])],
+                 foreground=[('active', '#000000'),  # Keep black when active
+                            ('pressed', '#000000')])  # Keep black when pressed
+          # Configure smaller button style with black text for better visibility
         style.configure('Small.TButton',
                        background=self.colors['secondary'],
-                       foreground=self.colors['text_primary'],
+                       foreground='#000000',  # Black text for better visibility
                        font=('Segoe UI', 9),
                        padding=(10, 8))
         
         style.map('Small.TButton',
                  background=[('active', self.colors['accent']),
-                            ('pressed', self.colors['highlight'])])
+                            ('pressed', self.colors['highlight'])],
+                 foreground=[('active', '#000000'),  # Keep black when active
+                            ('pressed', '#000000')])  # Keep black when pressed
     
     def load_images(self):
         """Load and resize images for the interface"""
@@ -195,15 +196,14 @@ class ComputerVisionGamesMenu:
         
         # Title with shadow effect
         title_font = font.Font(family="Segoe UI", size=28, weight="bold")
-        
-        # Shadow text
-        shadow_title = tk.Label(gradient_frame, text="Computer Vision Games", 
+          # Shadow text
+        shadow_title = tk.Label(gradient_frame, text="Juegos de Visión por Computadora", 
                               font=title_font, bg=self.colors['secondary'], 
                               fg=self.colors['primary'])
         shadow_title.pack(pady=(2, 0))
         
         # Main title
-        title = tk.Label(gradient_frame, text="Computer Vision Games", 
+        title = tk.Label(gradient_frame, text="Juegos de Visión por Computadora", 
                         font=title_font, bg=self.colors['secondary'], 
                         fg=self.colors['text_primary'])
         title.place(in_=shadow_title, x=-2, y=-2)
@@ -214,11 +214,10 @@ class ComputerVisionGamesMenu:
         
         # Decorative elements
         left_line = tk.Frame(subtitle_frame, bg=self.colors['highlight'], height=2, width=50)
-        left_line.pack(side=tk.LEFT, pady=8)
-        
+        left_line.pack(side=tk.LEFT, pady=8)        
         subtitle_font = font.Font(family="Segoe UI", size=14, weight="normal")
         subtitle = tk.Label(subtitle_frame, 
-                           text="  🎮 Control your favorite games using computer vision  🎮", 
+                           text="  🎮 Controla tus juegos favoritos usando visión por computadora  🎮", 
                            font=subtitle_font, bg=self.colors['secondary'], 
                            fg=self.colors['text_secondary'])
         subtitle.pack(side=tk.LEFT, padx=10)
@@ -235,11 +234,10 @@ class ComputerVisionGamesMenu:
         self.create_camera_panel(main_container)
         
         # Games grid
-        self.create_games_grid(main_container)
-    
+        self.create_games_grid(main_container)        
     def create_camera_panel(self, parent):
         """Create the camera settings panel"""
-        camera_frame = tk.LabelFrame(parent, text="🎥 Camera Settings", 
+        camera_frame = tk.LabelFrame(parent, text="🎥 Configuración de Cámara", 
                                    bg=self.colors['secondary'], fg=self.colors['text_primary'],
                                    font=('Segoe UI', 12, 'bold'), padx=20, pady=15,
                                    relief='flat', bd=2)
@@ -247,9 +245,8 @@ class ComputerVisionGamesMenu:
         
         # Camera selection with modern styling
         selection_frame = tk.Frame(camera_frame, bg=self.colors['secondary'])
-        selection_frame.pack(fill=tk.X, pady=(0, 15))
-        
-        camera_label = tk.Label(selection_frame, text="Select Camera:", 
+        selection_frame.pack(fill=tk.X, pady=(0, 15))        
+        camera_label = tk.Label(selection_frame, text="Seleccionar Cámara:", 
                               bg=self.colors['secondary'], fg=self.colors['text_primary'],
                               font=('Segoe UI', 10, 'bold'))
         camera_label.pack(anchor=tk.W, pady=(0, 8))
@@ -269,20 +266,18 @@ class ComputerVisionGamesMenu:
         # Button container
         button_frame = tk.Frame(camera_frame, bg=self.colors['secondary'])
         button_frame.pack(fill=tk.X)
-        
-        # Refresh cameras button
-        refresh_btn = ttk.Button(button_frame, text="🔄 Refresh Cameras", 
+          # Refresh cameras button
+        refresh_btn = ttk.Button(button_frame, text="🔄 Actualizar Cámaras", 
                                 command=self.load_cameras, style='Small.TButton')
         refresh_btn.pack(side=tk.LEFT, padx=(0, 10), fill=tk.X, expand=True)
         
         # Test camera button
-        test_btn = ttk.Button(button_frame, text="🔍 Test Camera", 
+        test_btn = ttk.Button(button_frame, text="🔍 Probar Cámara", 
                              command=self.test_selected_camera, style='Small.TButton')
-        test_btn.pack(side=tk.RIGHT, fill=tk.X, expand=True)
-    
+        test_btn.pack(side=tk.RIGHT, fill=tk.X, expand=True)        
     def create_games_grid(self, parent):
         """Create a modern grid layout for games"""
-        games_frame = tk.LabelFrame(parent, text="🎮 Available Games", 
+        games_frame = tk.LabelFrame(parent, text="🎮 Juegos Disponibles", 
                                   bg=self.colors['secondary'], fg=self.colors['text_primary'],
                                   font=('Segoe UI', 12, 'bold'), padx=20, pady=15,
                                   relief='flat', bd=2)
@@ -291,26 +286,25 @@ class ComputerVisionGamesMenu:
         # Grid container
         grid_container = tk.Frame(games_frame, bg=self.colors['secondary'])
         grid_container.pack(fill=tk.BOTH, expand=True, pady=10)
-        
-        # Game data
+          # Game data
         games_data = [
             {
                 'name': 'Arcade 1942',
-                'description': 'Control the classic shoot-em-up game with intuitive hand gestures',
+                'description': 'Controla el clásico juego de disparos con gestos intuitivos de las manos',
                 'image_key': 'arcade_1942',
                 'command': self.launch_arcade_1942,
                 'color': '#ff6b6b'
             },
             {
                 'name': 'Geometry Dash',
-                'description': 'Navigate the rhythm-based platformer using precise hand movements',
+                'description': 'Navega por el juego de plataformas rítmico usando movimientos precisos de las manos',
                 'image_key': 'geometry_dash',
                 'command': self.launch_geometry_dash,
                 'color': '#4ecdc4'
             },
             {
                 'name': 'Subway Surfers',
-                'description': 'Control the endless runner with full-body pose detection',
+                'description': 'Controla el juego de correr infinito con detección de poses de todo el cuerpo',
                 'image_key': 'subway_surfers',
                 'command': self.launch_subway_surfers,
                 'color': '#45b7d1'
@@ -378,9 +372,8 @@ class ComputerVisionGamesMenu:
             img_label = tk.Label(img_frame, image=self.images[card_key], 
                                bg=self.colors['accent'])
             img_label.pack(expand=True)
-        
-        # Launch button with custom styling
-        launch_btn = ttk.Button(content_frame, text=f"🚀 Launch {game_data['name']}", 
+          # Launch button with custom styling
+        launch_btn = ttk.Button(content_frame, text=f"🚀 Lanzar {game_data['name']}", 
                                command=game_data['command'], style='Game.TButton')
         launch_btn.pack(fill=tk.X, pady=(10, 0))        
     def create_footer(self):
@@ -390,27 +383,26 @@ class ComputerVisionGamesMenu:
         
         # Credits section with modern styling
         credits_frame = tk.Frame(footer_frame, bg=self.colors['secondary'])
-        credits_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
+        credits_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)        
         credits_font = font.Font(family="Segoe UI", size=10, weight="normal")
         credits = tk.Label(credits_frame, 
-                          text="💻 Computer Vision Games - June 2025 | Made with ❤️", 
+                          text="💻 Juegos de Visión por Computadora - Junio 2025 | Hecho con ❤️", 
                           font=credits_font, bg=self.colors['secondary'], 
                           fg=self.colors['text_secondary'])
         credits.pack(anchor=tk.W)
         
         # Version info
         version_label = tk.Label(credits_frame, 
-                               text="v2.0 - Enhanced UI", 
+                               text="v2.0 - Interfaz Mejorada", 
                                font=('Segoe UI', 8), bg=self.colors['secondary'], 
                                fg=self.colors['text_secondary'])
         version_label.pack(anchor=tk.W)
-          # Button container
+        
+        # Button container
         button_frame = tk.Frame(footer_frame, bg=self.colors['secondary'])
         button_frame.pack(side=tk.RIGHT)
-        
-        # Exit button with modern styling
-        exit_btn = ttk.Button(button_frame, text="❌ Exit Application", 
+          # Exit button with modern styling
+        exit_btn = ttk.Button(button_frame, text="❌ Salir", 
                              command=self.root.destroy, style='Small.TButton')
         exit_btn.pack()
         
@@ -428,7 +420,7 @@ class ComputerVisionGamesMenu:
         self.cameras = list_available_cameras()
         
         if not self.cameras:
-            self.camera_listbox.insert(tk.END, "No cameras detected")
+            self.camera_listbox.insert(tk.END, "No se detectaron cámaras")
         else:
             for idx, cam_id in enumerate(self.cameras):
                 self.camera_listbox.insert(tk.END, f"Camera {cam_id}")
@@ -440,12 +432,12 @@ class ComputerVisionGamesMenu:
         """Get the ID of the currently selected camera"""
         selection = self.camera_listbox.curselection()
         if not selection:
-            messagebox.showerror("Error", "Please select a camera")
+            messagebox.showerror("Error", "Por favor selecciona una cámara")
             return None
         
         index = selection[0]
         if index >= len(self.cameras):
-            messagebox.showerror("Error", "Invalid camera selection")
+            messagebox.showerror("Error", "Selección de cámara inválida")
             return None
         
         return self.cameras[index]
@@ -465,11 +457,11 @@ class ComputerVisionGamesMenu:
                 # Check if the script exists
                 script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), script_name)
                 if not os.path.exists(script_path):
-                    messagebox.showerror("Error", f"Game script not found: {script_name}")
+                    messagebox.showerror("Error", f"Script del juego no encontrado: {script_name}")
                     return
                 
                 # Launch the game in a separate process
-                messagebox.showinfo("Launching Game", message)
+                messagebox.showinfo("Lanzando Juego", message)
                 
                 # Handle different parameter structures for different games
                 command = [sys.executable, script_path]
@@ -488,27 +480,24 @@ class ComputerVisionGamesMenu:
                 subprocess.Popen(command)
                 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to launch game: {str(e)}")
-    
+                messagebox.showerror("Error", f"Falló al lanzar el juego: {str(e)}")        
     def launch_arcade_1942(self):
         """Launch the Arcade 1942 game controller"""
         self.launch_game(
             "arcade_1942_mouse_controller.py", 
-            "Launching Arcade 1942 controller. Use hand gestures to control the game!"
-        )
-    
+            "Lanzando controlador de Arcade 1942. ¡Usa gestos de manos para controlar el juego!"
+        )        
     def launch_geometry_dash(self):
         """Launch the Geometry Dash game controller"""
         self.launch_game(
             "geometry_dash_hand_controller.py", 
-            "Launching Geometry Dash controller. Use hand gestures to jump and navigate!"
-        )
-    
+            "Lanzando controlador de Geometry Dash. ¡Usa gestos de manos para saltar y navegar!"
+        )        
     def launch_subway_surfers(self):
         """Launch the Subway Surfers game controller"""
         self.launch_game(
             "subway_surfers_pose_detection.py", 
-            "Launching Subway Surfers controller. Use body poses to control the game!"
+            "Lanzando controlador de Subway Surfers. ¡Usa poses corporales para controlar el juego!"
         )
 
 def main():
