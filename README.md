@@ -79,18 +79,37 @@ Control del juego de plataformas rítmico mediante gestos de las manos.
 
 ### Subway Surfers
 
-Control del juego endless runner mediante detección de pose corporal completa.
+Control del juego endless runner mediante detección de pose corporal completa utilizando MediaPipe.
 
 **Controles:**
-- **Iniciar/Pausar**: Junta las manos frente a ti (como si aplaudieras)
-- **Moverse a la izquierda/derecha**: Inclina tu cuerpo a la izquierda o derecha
-- **Saltar**: Salta físicamente
-- **Deslizarse**: Agáchate
+
+1. **Iniciar/Pausar el juego**:
+   - Junta tus manos frente a ti una delante de la otra
+   - Mantén las manos unidas por unos segundos hasta que aparezca la confirmación
+   - Este mismo gesto se usa tanto para iniciar como para pausar/reanudar el juego
+
+2. **Movimiento horizontal (cambio de carril)**:
+   - **Moverse a la izquierda**: Inclina tu cuerpo hacia la izquierda
+   - **Moverse a la derecha**: Inclina tu cuerpo hacia la derecha
+   - **Regresar al centro**: Regresa a una posición corporal centrada
+
+3. **Movimientos verticales**:
+   - **Saltar**: Salta físicamente (levanta tus hombros del nivel inicial)
+   - **Deslizarse/Agacharse**: Agáchate o baja tus hombros debajo del nivel inicial
+   - **Posición normal**: Mantente de pie en posición erguida
 
 **Configuración recomendada:**
-- Colócate a una distancia de 1.5-2 metros de la cámara
-- Se necesita espacio suficiente para moverte
-- La cámara debe capturar tu cuerpo completo
+- **Distancia**: Colócate a 1.5-2 metros de la cámara
+- **Espacio**: Asegúrate de tener suficiente espacio para moverte en todas las direcciones
+- **Encuadre**: La cámara debe capturar tu cuerpo completo desde la cabeza hasta las rodillas
+- **Iluminación**: Buena iluminación frontal para una detección precisa
+- **Fondo**: Un fondo contrastante ayuda a mejorar la detección de pose
+
+**Consejos para un mejor control**:
+- Realiza movimientos deliberados y mantén las posiciones por un momento
+- Evita movimientos muy rápidos o bruscos que puedan confundir al detector
+- Mantén una postura erguida cuando no estés realizando acciones específicas
+- El sistema detecta los movimientos basándose en la posición de tus hombros como referencia
 
 ## Solución de problemas
 
