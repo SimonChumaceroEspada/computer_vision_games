@@ -71,8 +71,7 @@ Control del clásico juego shoot-em-up mediante gestos de las manos.
 Control del juego de plataformas rítmico mediante gestos de las manos.
 
 **Controles:**
-- **Saltar**: Levanta la mano rápidamente
-- **Volar**: Mantén la mano en posición elevada
+- **Saltar**: Gesto de pellizco
 
 **Configuración recomendada:**
 - Colócate a una distancia de 50-70 cm de la cámara
